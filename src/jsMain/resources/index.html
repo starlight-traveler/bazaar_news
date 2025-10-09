@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>HN Clone — Kotlin/Compose Web</title>
+    <style>
+      :root { --fg: #222; --bg: #fff; --accent: #ff6600; --muted: #666; }
+      body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif; color: var(--fg); background: var(--bg); }
+      a { color: var(--fg); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .container { max-width: 960px; margin: 0 auto; padding: 0 12px; }
+      .navbar { background: var(--accent); color: white; }
+      .navbar a { color: white; }
+      .navbar .brand { font-weight: 700; }
+      .card { background: white; border: 1px solid #eee; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+      .row { display: flex; gap: 12px; align-items: center; }
+      .spacer { flex: 1; }
+      .muted { color: var(--muted); }
+      .btn { padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(0,0,0,0.1); background: white; cursor: pointer; font-weight: 600; }
+      .btn:hover { background: #f5f5f5; }
+      .input, .textarea { width: 100%; padding: 8px 12px; border-radius: 10px; border: 1px solid #ddd; }
+      .stack { display: grid; gap: 12px; }
+      .list { display: grid; gap: 8px; }
+      .score { font-weight: 700; }
+      .small { font-size: 12px; }
+      .linkish { color: #0645AD; }
+      .tag { background: #f0f0f0; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+      .footer { padding: 24px 0; color: var(--muted); text-align: center; font-size: 12px; }
+      @media (max-width: 600px) {
+        .hide-sm { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="/hn-clone-kotlin-web.js" defer></script>
+  </body>
+</html>
