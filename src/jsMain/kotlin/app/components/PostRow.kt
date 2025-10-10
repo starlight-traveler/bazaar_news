@@ -5,33 +5,57 @@ import app.Post
 import org.jetbrains.compose.web.dom.*
 import org.w3c.dom.url.URL
 
+import androidx.compose.runtime.Composable
+import org.jetbrains.compose.web.dom.*
+
 @Composable
 fun PostRow(post: Post, index: Int? = null) {
     Div({ classes("card") }) {
+
+        // 🔹 Row 1: Title
         Div({ classes("row") }) {
             if (index != null) {
-                Span({ classes("muted"); attr("style", "width: 28px; text-align: right") }) {
-                    Text("${index}.")
+                Span({
+                    classes("muted")
+                    attr("style", "width: 28px; text-align: right; margin-right: 8px;")
+                }) {
+                    Text("$index.")
                 }
             }
-            A("#/item/${post.id}") {
+
+            // Post title as a link
+            A("#/post/${post.id}") {
                 B { Text(post.title) }
             }
-            if (!post.url.isNullOrBlank()) {
-                Text(" ")
-                A(post.url!!) {
-                    Span({ classes("muted", "small") }) {
-                        Text("(${hostname(post.url)})")
-                    }
-                }
+        }
+
+        // 🔹 Row 2: Content (snippet)
+        Div({ classes("row") }) {
+            P({
+                classes("small")
+                attr("style", "color: #666; margin-top: 4px;")
+            }) {
+                // Show a short preview if content is long
+                val preview = if (post.content.length > 150)
+                    post.content.take(150) + "..."
+                else post.content
+
+                Text(preview)
             }
         }
+
+        // 🔹 Row 3: Meta info
         Div({ classes("row") }) {
             Span({ classes("small", "muted") }) {
-                Text("${post.score} points by ${post.by} · ${post.commentCount} comments")
+                Text("Author ID: ${post.authorId} · Posted on ${post.createdAt}")
             }
+
             Div({ classes("spacer") }) {}
-            A("#/item/${post.id}") { Span({ classes("small", "linkish") }) { Text("discuss") } }
+
+            // Link to view full post
+//            A("#/post/${post.id}") {
+//                Span({ classes("small", "linkish") }) { Text("View details") }
+//            }
         }
     }
 }

@@ -8,53 +8,91 @@ import kotlinx.serialization.encodeToString
 import org.w3c.fetch.RequestInit
 import org.w3c.fetch.Headers
 
-// Change this to your backend origin (no trailing slash).
-// Example: "http://localhost:8080"
-const val API_BASE_URL: String = "http://localhost:8080"
+import io.ktor.client.*
+import io.ktor.client.engine.js.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.request.forms.*
 
-private val json = Json { ignoreUnknownKeys = true }
 
-suspend fun fetchTopPosts(sort: String = "top"): List<Post> {
-    val resp = window.fetch("$API_BASE_URL/api/posts?sort=$sort").await()
-    val text = resp.text().await()
-    if (!resp.ok) error("Failed to fetch posts: $text")
-    return json.decodeFromString(text)
+
+private const val BASE_URL = "http://localhost:8079/api"
+
+// ✅ Shared HTTP client instance
+val httpClient = HttpClient(Js) {
+    install(ContentNegotiation) {
+        json(Json {
+            prettyPrint = true
+            isLenient = true
+            ignoreUnknownKeys = true
+        })
+    }
 }
 
-suspend fun fetchPost(id: Long): Post {
-    val resp = window.fetch("$API_BASE_URL/api/post/$id").await()
-    val text = resp.text().await()
-    if (!resp.ok) error("Failed to fetch post: $text")
-    return json.decodeFromString(text)
+/* -------------------- POSTS -------------------- */
+
+suspend fun getPosts(): List<Post> {
+    return httpClient.get("$BASE_URL/posts").body()
 }
 
-suspend fun fetchComments(postId: Long): List<Comment> {
-    val resp = window.fetch("$API_BASE_URL/api/post/$postId/comments").await()
-    val text = resp.text().await()
-    if (!resp.ok) error("Failed to fetch comments: $text")
-    return json.decodeFromString(text)
+suspend fun getPost(id: Int): Post {
+    return httpClient.get("$BASE_URL/posts/$id").body()
 }
 
-suspend fun submitPost(req: NewPostRequest): Post {
-    val body = json.encodeToString(req)
-    val resp = window.fetch("$API_BASE_URL/api/post", RequestInit(
-        method = "POST",
-        headers = Headers().also {
-            it.append("Content-Type", "application/json")
-        },
-        body = body
-    )).await()
-
-    val text = resp.text().await()
-    if (!resp.ok) error("Submit failed: $text")
-    return json.decodeFromString(text)
+suspend fun createPost(title: String, content: String, authorId: Int): String {
+    return httpClient.submitForm(
+        url = "$BASE_URL/posts",
+        formParameters = parametersOf(
+            "title" to listOf(title),
+            "content" to listOf(content),
+            "authorId" to listOf(authorId.toString())
+        )
+    ).bodyAsText()
 }
 
-suspend fun vote(postId: Long, dir: Int): Post {
-    val resp = window.fetch("$API_BASE_URL/api/vote?postId=$postId&dir=$dir", RequestInit(
-        method = "POST"
-    )).await()
-    val text = resp.text().await()
-    if (!resp.ok) error("Vote failed: $text")
-    return json.decodeFromString(text)
+/* -------------------- USERS -------------------- */
+
+suspend fun registerUser(username: String, password: String): String {
+    return httpClient.submitForm(
+        url = "$BASE_URL/register",
+        formParameters = parametersOf(
+            "username" to listOf(username),
+            "password" to listOf(password)
+        )
+    ).bodyAsText()
 }
+
+suspend fun loginUser(username: String, password: String): String {
+    return httpClient.submitForm(
+        url = "$BASE_URL/login",
+        formParameters = parametersOf(
+            "username" to listOf(username),
+            "password" to listOf(password)
+        )
+    ).bodyAsText()
+}
+
+/* -------------------- COMMENTS -------------------- */
+
+//suspend fun getComments(): List<Comment> {
+//    return httpClient.get("$BASE_URL/comments").body()
+//}
+//
+//suspend fun getCommentsForPost(postId: Int): List<Comment> {
+//    return httpClient.get("$BASE_URL/comments?postId=$postId").body()
+//}
+//
+//suspend fun createComment(postId: Int, authorId: Int, content: String): String {
+//    return httpClient.submitForm(
+//        url = "$BASE_URL/comments",
+//        formParameters = parametersOf(
+//            "postId" to listOf(postId.toString()),
+//            "authorId" to listOf(authorId.toString()),
+//            "content" to listOf(content)
+//        )
+//    ).bodyAsText()
+//}

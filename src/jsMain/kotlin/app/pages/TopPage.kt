@@ -2,7 +2,7 @@ package app.pages
 
 import androidx.compose.runtime.*
 import app.Post
-import app.fetchTopPosts
+import app.getPosts
 import app.components.PostRow
 import kotlinx.coroutines.*
 import org.jetbrains.compose.web.dom.*
@@ -17,7 +17,7 @@ fun TopPage(sort: String = "top") {
         loading = true
         error = null
         try {
-            posts = fetchTopPosts(sort)
+            posts = getPosts()
         } catch (t: Throwable) {
             error = t.message ?: "Unknown error"
         } finally {

@@ -1,8 +1,7 @@
 package app.pages
 
 import androidx.compose.runtime.*
-import app.NewPostRequest
-import app.submitPost
+import app.createPost
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.web.dom.*
 import org.jetbrains.compose.web.attributes.InputType
@@ -14,16 +13,16 @@ import org.w3c.dom.HTMLTextAreaElement
 @Composable
 fun SubmitPage() {
     var title by remember { mutableStateOf("") }
-    var url by remember { mutableStateOf("") }
-    var text by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
+    var authorId by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
     var submitting by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     Div({ classes("card", "stack") }) {
-        H2 { Text("Submit") }
+        H2 { Text("Create a New Post") }
 
-        // Title
+        // Title input
         Input(InputType.Text, attrs = {
             classes("input")
             placeholder("Title")
@@ -34,25 +33,25 @@ fun SubmitPage() {
             }
         })
 
-        // URL (optional)
-        Input(InputType.Url, attrs = {
-            classes("input")
-            placeholder("URL (optional if you write text)")
-            value(url)
+        // Content textarea
+        TextArea(attrs = {
+            classes("textarea")
+            placeholder("Write your post content here…")
+            value(content)
             addEventListener("input") { e ->
-                val t = e.target as? HTMLInputElement
-                url = t?.value.orEmpty()
+                val t = e.target as? HTMLTextAreaElement
+                content = t?.value.orEmpty()
             }
         })
 
-        // Text (optional)
-        TextArea(attrs = {
-            classes("textarea")
-            placeholder("Text (optional; Markdown allowed if backend supports)")
-            value(text)
+        // Author ID (temporary until login)
+        Input(InputType.Number, attrs = {
+            classes("input")
+            placeholder("Author ID (temporary)")
+            value(authorId)
             addEventListener("input") { e ->
-                val t = e.target as? HTMLTextAreaElement
-                text = t?.value.orEmpty()
+                val t = e.target as? HTMLInputElement
+                authorId = t?.value.orEmpty()
             }
         })
 
@@ -61,22 +60,23 @@ fun SubmitPage() {
             classes("btn")
             if (submitting) attr("disabled", "true")
             addEventListener("click") {
-                if (title.isBlank()) {
-                    status = "Title is required"
+                if (title.isBlank() || content.isBlank() || authorId.isBlank()) {
+                    status = "Please fill in all fields"
                     return@addEventListener
                 }
                 scope.launch {
                     submitting = true
                     status = null
                     try {
-                        submitPost(
-                            NewPostRequest(
-                                title = title,
-                                url = url.ifBlank { null },
-                                text = text.ifBlank { null }
-                            )
+                        val response = createPost(
+                            title = title,
+                            content = content,
+                            authorId = authorId.toInt()
                         )
-                        status = "Submitted!"
+                        status = "Post submitted successfully!"
+                        title = ""
+                        content = ""
+                        authorId = ""
                     } catch (t: Throwable) {
                         status = "Error: ${t.message}"
                     } finally {
@@ -84,7 +84,9 @@ fun SubmitPage() {
                     }
                 }
             }
-        }) { Text(if (submitting) "Submitting…" else "Submit") }
+        }) {
+            Text(if (submitting) "Submitting…" else "Submit")
+        }
 
         if (status != null) {
             P { Text(status!!) }

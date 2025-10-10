@@ -3,15 +3,15 @@ package app.pages
 import androidx.compose.runtime.*
 import app.Post
 import app.Comment
-import app.fetchComments
-import app.fetchPost
+//import app.getComments
+import app.getPost
 import kotlinx.coroutines.*
 import org.jetbrains.compose.web.dom.*
 
 @Composable
 fun ItemPage(id: Long) {
     var post by remember { mutableStateOf<Post?>(null) }
-    var comments by remember { mutableStateOf<List<Comment>>(emptyList()) }
+    //var comments by remember { mutableStateOf<List<Comment>>(emptyList()) }
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
 
@@ -19,8 +19,8 @@ fun ItemPage(id: Long) {
         loading = true
         error = null
         try {
-            post = fetchPost(id)
-            comments = fetchComments(id)
+            post = getPost(id.toInt())
+           // comments = getComments(id.toInt())
         } catch (t: Throwable) {
             error = t.message ?: "Unknown error"
         } finally {
@@ -28,31 +28,36 @@ fun ItemPage(id: Long) {
         }
     }
 
-    if (loading) {
-        P { Text("Loading…") }
-        return
-    }
-    if (error != null) {
-        Div({ classes("card") }) { P { Text("Error: ${error}") } }
-        return
-    }
-    val p = post ?: return
-    Div({ classes("stack") }) {
-        Div({ classes("card") }) {
-            H3 { Text(p.title) }
-            if (!p.url.isNullOrBlank()) {
-                P { A(p.url!!) { Text(p.url!!) } }
-            }
-            P({ classes("muted", "small") }) { Text("${p.score} points by ${p.by} · ${p.commentCount} comments") }
-            if (!p.text.isNullOrBlank()) {
-                P { Text(p.text!!) }
-            }
-        }
-        Div({ classes("card") }) {
-            H4 { Text("Comments (${comments.size})") }
-            if (comments.isEmpty()) P({ classes("muted") }) { Text("No comments yet.") }
-            comments.forEach { c ->
-                CommentView(c)
+    when {
+        loading -> P { Text("Loading…") }
+        error != null -> Div({ classes("card") }) { P { Text("Error: $error") } }
+        else -> {
+            val p = post ?: return
+            Div({ classes("stack") }) {
+
+                // 🔹 Post content
+                Div({ classes("card") }) {
+                    H3 { Text(p.title) }
+                    P({ classes("muted", "small") }) {
+                        Text("Author ID: ${p.authorId} · Posted on ${p.createdAt}")
+                    }
+                    P {
+                        Text(p.content)
+                    }
+                }
+
+                // 🔹 Comments section
+//                Div({ classes("card") }) {
+//                    H4 { Text("Comments (${comments.size})") }
+//
+//                    if (comments.isEmpty()) {
+//                        P({ classes("muted") }) { Text("No comments yet.") }
+//                    } else {
+//                        comments.forEach { c ->
+//                            CommentView(c)
+//                        }
+//                    }
+//                }
             }
         }
     }
@@ -60,12 +65,13 @@ fun ItemPage(id: Long) {
 
 @Composable
 fun CommentView(c: Comment) {
-    Div({ attr("style", "margin-left: 0") }) {
+    Div({ attr("style", "margin-left: 8px; margin-bottom: 12px;") }) {
         P({ classes("small") }) {
-            B { Text(c.by) }
-            Text(" — ")
-            Span({ classes("muted") }) { Text("#${c.id}") }
+            B { Text("User #${c.authorId}") }
+            Text(" · ${c.createdAt}")
         }
-        P { Text(c.text) }
+        P {
+            Text(c.content)
+        }
     }
 }

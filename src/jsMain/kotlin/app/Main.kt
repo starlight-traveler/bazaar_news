@@ -78,8 +78,8 @@ fun App() {
 fun parseHashRoute(): Pair<Route, Long?> {
     val h = window.location.hash.removePrefix("#")
     val parts = h.split("/").filter { it.isNotBlank() }
-    if (parts.isEmpty()) return Route.Top to null
-    return when (parts[0]) {
+
+    return when (parts.firstOrNull()) {
         "top" -> Route.Top to null
         "new" -> Route.New to null
         "submit" -> Route.Submit to null
@@ -88,9 +88,10 @@ fun parseHashRoute(): Pair<Route, Long?> {
             val id = parts.getOrNull(1)?.toLongOrNull()
             Route.Item to id
         }
-        else -> Route.Top to null
+        else -> Route.New to null // default route (you can change to Submit/Login if you prefer)
     }
 }
+
 
 fun currentRouteFromHash(): Route = parseHashRoute().first
 
