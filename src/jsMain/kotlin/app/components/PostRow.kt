@@ -7,6 +7,7 @@ import org.w3c.dom.url.URL
 
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.web.dom.*
+import app.util.ReversibleUserId32
 
 @Composable
 fun PostRow(post: Post, index: Int? = null) {
@@ -47,7 +48,7 @@ fun PostRow(post: Post, index: Int? = null) {
         // 🔹 Row 3: Meta info
         Div({ classes("row") }) {
             Span({ classes("small", "muted") }) {
-                Text("Author ID: ${post.authorId} · Posted on ${post.createdAt}")
+                Text("Author ID: ${ReversibleUserId32.decode(post.authorId)} · Posted on ${post.createdAt}")
             }
 
             Div({ classes("spacer") }) {}

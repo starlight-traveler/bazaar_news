@@ -1,12 +1,6 @@
 package app
 
-import kotlinx.browser.window
-import kotlinx.coroutines.await
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import org.w3c.fetch.RequestInit
-import org.w3c.fetch.Headers
 
 import io.ktor.client.*
 import io.ktor.client.engine.js.*
@@ -43,7 +37,7 @@ suspend fun getPost(id: Int): Post {
     return httpClient.get("$BASE_URL/posts/$id").body()
 }
 
-suspend fun createPost(title: String, content: String, authorId: Int): String {
+suspend fun createPost(title: String, content: String, authorId: String): String {
     return httpClient.submitForm(
         url = "$BASE_URL/posts",
         formParameters = parametersOf(
