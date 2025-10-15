@@ -30,6 +30,13 @@ fun NavBar(
 
             Text(" | ")
 
+            A("#/map", attrs = {
+                onClick { onNavigate(Route.Map) }
+                if (current == Route.Map) classes("active")
+            }) { Text("Map") }
+
+            Text(" | ")
+
             A("#/new", attrs = {
                 onClick { onNavigate(Route.New) }
                 if (current == Route.New) classes("active")

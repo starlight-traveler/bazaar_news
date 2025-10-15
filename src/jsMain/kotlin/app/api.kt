@@ -11,12 +11,13 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.client.request.forms.*
+import kotlin.random.Random
 
 
 
 private const val BASE_URL = "http://localhost:8079/api"
 
-// ✅ Shared HTTP client instance
+// Shared HTTP client instance
 val httpClient = HttpClient(Js) {
     install(ContentNegotiation) {
         json(Json {
@@ -38,12 +39,17 @@ suspend fun getPost(id: Int): Post {
 }
 
 suspend fun createPost(title: String, content: String, authorId: String): String {
+    // Generate random coordinates
+    val randomX = Random.nextDouble(0.0, 2000.0) // adjust max as needed
+    val randomY = Random.nextDouble(0.0, 1500.0)
     return httpClient.submitForm(
         url = "$BASE_URL/posts",
         formParameters = parametersOf(
             "title" to listOf(title),
             "content" to listOf(content),
-            "authorId" to listOf(authorId.toString())
+            "authorId" to listOf(authorId.toString()),
+            "x" to listOf(randomX.toString()),
+            "y" to listOf(randomY.toString())
         )
     ).bodyAsText()
 }
@@ -72,21 +78,22 @@ suspend fun loginUser(username: String, password: String): String {
 
 /* -------------------- COMMENTS -------------------- */
 
-//suspend fun getComments(): List<Comment> {
-//    return httpClient.get("$BASE_URL/comments").body()
-//}
-//
-//suspend fun getCommentsForPost(postId: Int): List<Comment> {
-//    return httpClient.get("$BASE_URL/comments?postId=$postId").body()
-//}
-//
-//suspend fun createComment(postId: Int, authorId: Int, content: String): String {
-//    return httpClient.submitForm(
-//        url = "$BASE_URL/comments",
-//        formParameters = parametersOf(
-//            "postId" to listOf(postId.toString()),
-//            "authorId" to listOf(authorId.toString()),
-//            "content" to listOf(content)
-//        )
-//    ).bodyAsText()
-//}
+suspend fun getCommentsForPost(postId: Int): List<Comment> {
+    try {
+        return httpClient.get("$BASE_URL/posts/$postId/comments").body()
+    } catch (e: Exception) {
+        // Try to get the error text from the response
+        console.error("Error fetching comments:", e)
+        throw e
+    }
+}
+
+suspend fun createComment(postId: Int, username: String, content: String): String {
+    return httpClient.submitForm(
+        url = "$BASE_URL/posts/$postId/comments",
+        formParameters = parametersOf(
+            "username" to listOf(username),
+            "content" to listOf(content)
+        )
+    ).bodyAsText()
+}

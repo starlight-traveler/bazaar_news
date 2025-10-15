@@ -16,7 +16,12 @@ data class Post(
     val title: String,
     val content: String,
     val authorId: Int,
-    val createdAt: String
+    val createdAt: String,
+    val x: Double,
+    val y: Double,
+    val traction: Double,
+    val color: String,
+    val radius: Double
 ) {
     // Converts backend string timestamp -> Kotlinx datetime
     fun createdAtLocal(): LocalDateTime? {
@@ -41,7 +46,8 @@ data class Comment(
     val postId: Int,
     val authorId: Int,
     val content: String,
-    val createdAt: String
+    val createdAt: String,
+    val authorUsername: String
 ) {
     fun createdAtLocal(): LocalDateTime? {
         return try {

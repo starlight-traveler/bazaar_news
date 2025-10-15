@@ -37,7 +37,8 @@ private fun apiBaseUrl(): String {
 private suspend fun createPost(
     title: String,
     content: String,
-    authorId: String
+    //authorId: String,
+    username: String
 ): String {
     val url = "${apiBaseUrl()}/api/posts"
 
@@ -45,7 +46,9 @@ private suspend fun createPost(
     val form = URLSearchParams().apply {
         append("title", title)
         append("content", content)
-        append("authorId", authorId) // must be parseable as Int server-side
+       // append("authorId", authorId)
+        append("username", username)
+    // must be parseable as Int server-side
     }
 
     val init = RequestInit(
@@ -77,13 +80,13 @@ private suspend fun createPost(
 fun SubmitPage() {
     // Reactive login state sourced from localStorage so we don't rely on App props
     var loggedIn by remember { mutableStateOf(window.localStorage.getItem("loggedIn") == "true") }
-    var displayName by remember { mutableStateOf(window.localStorage.getItem("displayName") ?: "") }
+    var displayName by remember { mutableStateOf(window.localStorage.getItem("username") ?: "") }
 
     // Keep in sync if other code changes localStorage (multi-tab or after login)
     DisposableEffect(Unit) {
         val handler: (org.w3c.dom.events.Event) -> Unit = {
             loggedIn = (window.localStorage.getItem("loggedIn") == "true")
-            displayName = (window.localStorage.getItem("displayName") ?: "")
+            displayName = (window.localStorage.getItem("username") ?: "")
         }
 
         // Add event listeners when this composable enters composition
@@ -152,27 +155,31 @@ fun SubmitPage() {
             classes("btn")
             if (submitting) attr("disabled", "true")
             addEventListener("click") {
+//                get authorId from local storage
+//                val authorId = window.localStorage.getItem("userId")
+//                console.log("DEBUG: localStorage.userId =", authorId)
+
                 // Pull userId from localStorage (must be set at login time)
-                val authorId = window.localStorage.getItem("userId")
-                console.log("DEBUG: localStorage.userId =", authorId)
+                val username = window.localStorage.getItem("username")
+                console.log("DEBUG: localStorage.userId =", username)
 
                 if (title.isBlank() || content.isBlank()) {
                     status = "Please fill in the Title and Content."
                     console.log("DEBUG: missing title or content", title, content)
                     return@addEventListener
                 }
-                if (authorId == null) {
+                if (username == null) {
                     status = "Cannot submit: missing user id. Ensure login stores localStorage.userId."
-                    console.log("DEBUG: authorId missing")
+                    console.log("DEBUG: username missing")
                     return@addEventListener
                 }
 
                 // The server expects an Int; ensure the stored ID is parseable
-                if (authorId.toIntOrNull() == null) {
-                    status = "Stored userId is not an integer. Fix the login flow to save a numeric userId."
-                    console.log("DEBUG: authorId not an integer:", authorId)
-                    return@addEventListener
-                }
+//                if (authorId.toIntOrNull() == null) {
+//                    status = "Stored userId is not an integer. Fix the login flow to save a numeric userId."
+//                    console.log("DEBUG: authorId not an integer:", authorId)
+//                    return@addEventListener
+//                }
 
 //                console.log("DEBUG: preparing to submit form:", js("({ title: title, content: content, authorId: authorId })"))
 
@@ -183,7 +190,7 @@ fun SubmitPage() {
                         val msg = createPost(
                             title = title,
                             content = content,
-                            authorId = authorId
+                            username = username
                         )
                         console.log("DEBUG: createPost() returned:", msg)
                         status = msg // e.g., "Post created with id 123"

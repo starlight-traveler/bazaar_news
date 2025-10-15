@@ -3,6 +3,9 @@ package app.pages
 
 import androidx.compose.runtime.*
 import app.Post
+import app.Comment
+import app.getCommentsForPost
+import app.createComment
 import app.util.ReversibleUserId32
 import kotlinx.browser.window
 import kotlinx.coroutines.await
@@ -17,6 +20,7 @@ import org.jetbrains.compose.web.dom.Style
 import org.jetbrains.compose.web.dom.Text
 import androidx.compose.runtime.Composable
 import kotlinx.browser.document
+import org.w3c.dom.HTMLTextAreaElement
 
 // ───────────────────────────────────────────────────────────────────────────────
 // API (mirrors your form/x-www-form-urlencoded server style; this endpoint is JSON)
@@ -79,6 +83,17 @@ fun InstallDetailStyles() {
                 .sk-gap { height: 10px; }
                 .sk-w-70 { width: 70%; }
                 .sk-w-40 { width: 40%; }
+                .comment-item {
+                  padding: 12px;
+                  background: #f9fafb;
+                  border-radius: 8px;
+                  margin-bottom: 12px;
+                }
+                .comment-meta {
+                  font-size: 0.875rem;
+                  color: #6b7280;
+                  margin-bottom: 6px;
+                }
             """.trimIndent()
 
             val styleEl = document.createElement("style")
@@ -104,6 +119,21 @@ fun PostDetailPage(postId: Long) {
     var error by remember { mutableStateOf<String?>(null) }
     var post by remember { mutableStateOf<Post?>(null) }
     var copied by remember { mutableStateOf(false) }
+
+    // Comments state
+    var comments by remember { mutableStateOf<List<Comment>>(emptyList()) }
+    var commentsLoading by remember { mutableStateOf(false) }
+    var commentsError by remember { mutableStateOf<String?>(null) }
+
+    // Comment form state
+    var commentContent by remember { mutableStateOf("") }
+    var submittingComment by remember { mutableStateOf(false) }
+    var commentStatus by remember { mutableStateOf<String?>(null) }
+
+    // Auth state
+    var loggedIn by remember { mutableStateOf(window.localStorage.getItem("loggedIn") == "true") }
+    var username by remember { mutableStateOf(window.localStorage.getItem("username") ?: "") }
+
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(postId) {
@@ -118,6 +148,19 @@ fun PostDetailPage(postId: Long) {
             error = t.message ?: "Unknown error"
         } finally {
             loading = false
+        }
+    }
+
+    // Fetch comments
+    LaunchedEffect(postId) {
+        commentsLoading = true
+        commentsError = null
+        try {
+            comments = getCommentsForPost(postId.toInt())
+        } catch (t: Throwable) {
+            commentsError = t.message ?: "Failed to load comments"
+        } finally {
+            commentsLoading = false
         }
     }
 
@@ -206,13 +249,116 @@ fun PostDetailPage(postId: Long) {
                         }) { Text(if (copied) "Copied ✓" else "Copy link") }
                     }
 
-                    // Divider (using your rhythm)
+                    // Divider
                     Hr()
 
                     // Content
                     P {
                         // Respect your base typography; no extra classes needed
                         Text(p.content)
+                    }
+
+                    // Comments section
+                    Div({ classes("card", "stack", "fade-in"); attr("style", "margin-top: 16px;") }) {
+                        H3 { Text("Comments (${comments.size})") }
+
+                        Hr()
+
+                        // Comment form
+                        if (loggedIn) {
+                            Div({ classes("stack"); attr("style", "margin-bottom: 24px;") }) {
+                                TextArea(attrs = {
+                                    classes("textarea")
+                                    attr("placeholder", "Write a comment...")
+                                    attr("rows", "3")
+                                    value(commentContent)
+                                    addEventListener("input") { e ->
+                                        val t = e.target as? HTMLTextAreaElement
+                                        commentContent = t?.value.orEmpty()
+                                    }
+                                })
+
+                                if (commentStatus != null) {
+                                    Div({
+                                        classes(
+                                            "alert",
+                                            if (commentStatus!!.startsWith("Error")) "alert-error" else "alert-success"
+                                        )
+                                    }) {
+                                        Text(commentStatus!!)
+                                    }
+                                }
+
+                                Button(attrs = {
+                                    classes("btn")
+                                    if (submittingComment || commentContent.isBlank()) attr("disabled", "true")
+                                    onClick {
+                                        scope.launch {
+                                            submittingComment = true
+                                            commentStatus = null
+                                            try {
+                                                createComment(
+                                                    postId = postId.toInt(),
+                                                    username = username,
+                                                    content = commentContent
+                                                )
+                                                commentStatus = "Comment posted!"
+                                                commentContent = ""
+                                                // Refresh comments
+                                                comments = getCommentsForPost(postId.toInt())
+                                            } catch (t: Throwable) {
+                                                commentStatus = "Error: ${t.message}"
+                                            } finally {
+                                                submittingComment = false
+                                            }
+                                        }
+                                    }
+                                }) {
+                                    Text(if (submittingComment) "Posting..." else "Post Comment")
+                                }
+                            }
+                        } else {
+                            Div({ classes("alert", "alert-warning") }) {
+                                Text("You must be ")
+                                A("#/login") { Text("logged in") }
+                                Text(" to comment.")
+                            }
+                        }
+
+                        // Comments list
+                        when {
+                            commentsLoading -> {
+                                Div({ classes("sk-block") })
+                                Div({ classes("sk-gap") })
+                                Div({ classes("sk-block", "sk-w-70") })
+                            }
+
+                            commentsError != null -> {
+                                Div({ classes("alert", "alert-error") }) {
+                                    Text("Error loading comments: $commentsError")
+                                }
+                            }
+
+                            comments.isEmpty() -> {
+                                P({ classes("muted", "small") }) {
+                                    Text("No comments yet. Be the first to comment!")
+                                }
+                            }
+
+                            else -> {
+                                comments.forEach { comment ->
+                                    Div({ attr("class", "comment-item") }) {
+                                        Div({ attr("class", "comment-meta") }) {
+                                            B { Text(comment.authorUsername) }
+                                            Text(" · ${comment.formattedDate()}")
+                                        }
+                                        P({ attr("style", "margin: 0;") }) {
+                                            Text(comment.content)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

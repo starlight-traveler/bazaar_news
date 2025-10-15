@@ -14,6 +14,7 @@ import app.pages.ItemPage              // keep if you still use "#/item/{id}"
 import app.pages.PostDetailPage       // <-- new post detail page
 
 import app.components.NavBar
+import app.pages.MapPage
 import app.util.ReversibleUserId32
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.events.Event
@@ -30,7 +31,7 @@ private const val API_BASE = "http://localhost:8079"
 
 // Keep enum routes (we'll store the numeric id separately like you already do)
 enum class Route {
-    Top, New, Item, Post, Submit, Login, Register
+    Top, Map, New, Item, Post, Submit, Login, Register
 }
 
 @Composable
@@ -40,7 +41,7 @@ fun App() {
 
     // Centralized auth state (reactive)
     var loggedIn by remember { mutableStateOf(window.localStorage.getItem("loggedIn") == "true") }
-    var displayName by remember { mutableStateOf(window.localStorage.getItem("displayName") ?: "") }
+    var username by remember { mutableStateOf(window.localStorage.getItem("username") ?: "") }
 
     // Ensure we have a sensible initial hash
     LaunchedEffect(Unit) {
@@ -64,17 +65,17 @@ fun App() {
         // Keep in sync if other tabs change auth, or if you manually tweak localStorage
         window.addEventListener("storage", {
             loggedIn = (window.localStorage.getItem("loggedIn") == "true")
-            displayName = (window.localStorage.getItem("displayName") ?: "")
+            username = (window.localStorage.getItem("username") ?: "")
         })
     }
 
     // Logout handler (clears state + storage, navigates to login)
     fun handleLogout() {
         window.localStorage.removeItem("loggedIn")
-        window.localStorage.removeItem("displayName")
+        window.localStorage.removeItem("username")
         window.localStorage.removeItem("userId")
         loggedIn = false
-        displayName = ""
+        username = ""
         window.location.hash = "#/login"
     }
 
@@ -84,10 +85,11 @@ fun App() {
             NavBar(
                 current = route,
                 loggedIn = loggedIn,
-                displayName = displayName,
+                displayName = username,
                 onLogout = { handleLogout() },
                 onNavigate = { r ->
                     when (r) {
+                        Route.Map -> window.location.hash = "#/map"
                         Route.Top -> window.location.hash = "#/top"
                         Route.New -> window.location.hash = "#/new"
                         Route.Submit -> window.location.hash = "#/submit"
@@ -106,21 +108,22 @@ fun App() {
         attr("style", "padding: 16px 0 32px")
     }) {
         when (route) {
+            Route.Map -> MapPage()
             Route.Top -> TopPage("top")
             Route.New -> NewPage()
-            Route.Item -> ItemPage(itemId ?: -1L)              // legacy item detail (if you still use it)
-            Route.Post -> PostDetailPage(itemId ?: -1L)        // <-- post detail route
+            Route.Item -> ItemPage(itemId ?: -1L)
+            Route.Post -> PostDetailPage(itemId ?: -1L)
             Route.Submit -> SubmitPage()
             Route.Login -> LoginPage(
                 onLoggedIn = { name ->
                     val userId = ReversibleUserId32.encode(name)
                     window.localStorage.setItem("loggedIn", "true")
-                    window.localStorage.setItem("displayName", name)
+                    window.localStorage.setItem("username", name)
                     window.localStorage.setItem("userId", userId.toString())
 
                     // Lift state immediately
                     loggedIn = true
-                    displayName = name
+                    username = name
 
                     // Notify any listeners
                     window.dispatchEvent(Event("auth-change"))
@@ -163,6 +166,7 @@ fun parseHashRoute(): Pair<Route, Long?> {
     if (parts.isEmpty()) return Route.Top to null
 
     return when (parts[0]) {
+        "map" -> Route.Map to null
         "top" -> Route.Top to null
         "new" -> Route.New to null
         "submit" -> Route.Submit to null
