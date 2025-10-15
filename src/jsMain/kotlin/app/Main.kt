@@ -136,13 +136,6 @@ fun App() {
         }
     }
 
-    // ───────────────────────────────── Footer ──────────────────────────────────
-    Div({ classes("footer") }) {
-        Text("Built with Kotlin + Compose Web · ")
-        A("https://kotlinlang.org") { Text("Kotlin") }
-        Text(" · ")
-        A("https://www.jetbrains.com/lp/compose-mpp/") { Text("Compose Multiplatform") }
-    }
 }
 
 /**

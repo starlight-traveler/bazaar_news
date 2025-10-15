@@ -78,22 +78,16 @@ private suspend fun createPost(
 
 @Composable
 fun SubmitPage() {
-    // Reactive login state sourced from localStorage so we don't rely on App props
     var loggedIn by remember { mutableStateOf(window.localStorage.getItem("loggedIn") == "true") }
     var displayName by remember { mutableStateOf(window.localStorage.getItem("username") ?: "") }
 
-    // Keep in sync if other code changes localStorage (multi-tab or after login)
     DisposableEffect(Unit) {
         val handler: (org.w3c.dom.events.Event) -> Unit = {
             loggedIn = (window.localStorage.getItem("loggedIn") == "true")
             displayName = (window.localStorage.getItem("username") ?: "")
         }
-
-        // Add event listeners when this composable enters composition
         window.addEventListener("storage", handler)
         window.addEventListener("auth-change", handler)
-
-        // Remove them when the composable leaves composition
         onDispose {
             window.removeEventListener("storage", handler)
             window.removeEventListener("auth-change", handler)
@@ -106,107 +100,81 @@ fun SubmitPage() {
     var submitting by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    Div({ classes("card", "stack") }) {
-        H2 { Text("Create a New Post") }
+    // NEW: outer container centers the page content
+    Div({ classes("container") }) {
+        Div({ classes("card", "stack") }) {
+            H2 { Text("Create a New Post") }
 
-        if (!loggedIn) {
-            Div({ classes("alert", "alert-warning") }) {
-                Text("You must be logged in to submit.")
+            if (!loggedIn) {
+                Div({ classes("alert", "alert-warning") }) {
+                    Text("You must be logged in to submit.")
+                }
+                Button(attrs = {
+                    classes("btn")
+                    addEventListener("click") { window.location.hash = "#/login" }
+                }) { Text("Go to Login") }
+                return@Div
             }
+
+            P {
+                B { Text("Author: ") }
+                Text(displayName.ifBlank { "User" })
+            }
+
+            Input(InputType.Text, attrs = {
+                classes("input")
+                placeholder("Title")
+                value(title)
+                addEventListener("input") { e ->
+                    title = (e.target as? HTMLInputElement)?.value.orEmpty()
+                }
+            })
+
+            TextArea(attrs = {
+                classes("textarea")
+                placeholder("Write your post content here…")
+                value(content)
+                addEventListener("input") { e ->
+                    content = (e.target as? HTMLTextAreaElement)?.value.orEmpty()
+                }
+            })
+
             Button(attrs = {
                 classes("btn")
+                if (submitting) attr("disabled", "true")
                 addEventListener("click") {
-                    window.location.hash = "#/login"
-                }
-            }) { Text("Go to Login") }
-            // Early return UI-only (don’t render the form when logged out)
-            return@Div
-        }
-
-        // Author display (read-only)
-        P {
-            B { Text("Author: ") }
-            Text(displayName.ifBlank { "User" })
-        }
-
-        // Title input
-        Input(InputType.Text, attrs = {
-            classes("input")
-            placeholder("Title")
-            value(title)
-            addEventListener("input") { e ->
-                val t = e.target as? HTMLInputElement
-                title = t?.value.orEmpty()
-            }
-        })
-
-        // Content textarea
-        TextArea(attrs = {
-            classes("textarea")
-            placeholder("Write your post content here…")
-            value(content)
-            addEventListener("input") { e ->
-                val t = e.target as? HTMLTextAreaElement
-                content = t?.value.orEmpty()
-            }
-        })
-
-        Button(attrs = {
-            classes("btn")
-            if (submitting) attr("disabled", "true")
-            addEventListener("click") {
-//                get authorId from local storage
-//                val authorId = window.localStorage.getItem("userId")
-//                console.log("DEBUG: localStorage.userId =", authorId)
-
-                // Pull userId from localStorage (must be set at login time)
-                val username = window.localStorage.getItem("username")
-                console.log("DEBUG: localStorage.userId =", username)
-
-                if (title.isBlank() || content.isBlank()) {
-                    status = "Please fill in the Title and Content."
-                    console.log("DEBUG: missing title or content", title, content)
-                    return@addEventListener
-                }
-                if (username == null) {
-                    status = "Cannot submit: missing user id. Ensure login stores localStorage.userId."
-                    console.log("DEBUG: username missing")
-                    return@addEventListener
-                }
-
-                // The server expects an Int; ensure the stored ID is parseable
-//                if (authorId.toIntOrNull() == null) {
-//                    status = "Stored userId is not an integer. Fix the login flow to save a numeric userId."
-//                    console.log("DEBUG: authorId not an integer:", authorId)
-//                    return@addEventListener
-//                }
-
-//                console.log("DEBUG: preparing to submit form:", js("({ title: title, content: content, authorId: authorId })"))
-
-                scope.launch {
-                    submitting = true
-                    status = null
-                    try {
-                        val msg = createPost(
-                            title = title,
-                            content = content,
-                            username = username
-                        )
-                        console.log("DEBUG: createPost() returned:", msg)
-                        status = msg // e.g., "Post created with id 123"
-                        title = ""
-                        content = ""
-                    } catch (t: Throwable) {
-                        console.error("DEBUG: Error submitting post:", t)
-                        status = "Error: ${t.message}"
-                    } finally {
-                        submitting = false
-                        console.log("DEBUG: submit complete, submitting=false")
+                    val username = window.localStorage.getItem("username")
+                    if (title.isBlank() || content.isBlank()) {
+                        status = "Please fill in the Title and Content."
+                        return@addEventListener
+                    }
+                    if (username == null) {
+                        status = "Cannot submit: missing user id. Ensure login stores localStorage.userId."
+                        return@addEventListener
+                    }
+                    scope.launch {
+                        submitting = true
+                        status = null
+                        try {
+                            val msg = createPost(title = title, content = content, username = username)
+                            status = msg
+                            title = ""
+                            content = ""
+                        } catch (t: Throwable) {
+                            status = "Error: ${t.message}"
+                        } finally {
+                            submitting = false
+                        }
                     }
                 }
+            }) {
+                Text(if (submitting) "Submitting…" else "Submit")
             }
-        }) {
-            Text(if (submitting) "Submitting…" else "Submit")
+
+            if (status != null) {
+                P { Text(status!!) }
+            }
         }
     }
-    }
+}
+

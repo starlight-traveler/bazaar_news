@@ -7,18 +7,15 @@ import app.Comment
 import app.getCommentsForPost
 import app.createComment
 import app.util.ReversibleUserId32
+import app.components.UpvoteButton
 import kotlinx.browser.window
 import kotlinx.coroutines.await
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import org.jetbrains.compose.web.css.Style
 import org.jetbrains.compose.web.dom.*
 import org.w3c.fetch.Headers
 import org.w3c.fetch.RequestInit
-import org.jetbrains.compose.web.dom.Style
-import org.jetbrains.compose.web.dom.Text
-import androidx.compose.runtime.Composable
 import kotlinx.browser.document
 import org.w3c.dom.HTMLTextAreaElement
 
@@ -52,15 +49,12 @@ private suspend fun fetchPostById(id: Long): Post {
 }
 
 // ───────────────────────────────────────────────────────────────────────────────
-// Small local styles: minimal, complements your index.html classes
+// Small local styles
 // ───────────────────────────────────────────────────────────────────────────────
-
-// imports you need:
 
 @Composable
 fun InstallDetailStyles() {
     LaunchedEffect(Unit) {
-        // Prevent duplicates on recomposition/hot-reload
         if (document.getElementById("detail-styles") == null) {
             val css = """
                 @keyframes fadeInUp {
@@ -105,8 +99,6 @@ fun InstallDetailStyles() {
     }
 }
 
-
-
 // ───────────────────────────────────────────────────────────────────────────────
 // Page
 // ───────────────────────────────────────────────────────────────────────────────
@@ -141,7 +133,6 @@ fun PostDetailPage(postId: Long) {
         error = null
         post = null
         try {
-            // tiny delay lets skeleton paint (optional)
             delay(60)
             post = fetchPostById(postId)
         } catch (t: Throwable) {
@@ -165,7 +156,7 @@ fun PostDetailPage(postId: Long) {
     }
 
     Div({ classes("container"); attr("style", "padding: 16px 0 24px;") }) {
-        // Top actions (match your button look)
+        // Top actions
         Div({ classes("row"); attr("style", "gap: 8px; margin-bottom: 12px;") }) {
             Button(attrs = {
                 classes("btn")
@@ -181,7 +172,6 @@ fun PostDetailPage(postId: Long) {
 
         when {
             loading -> {
-                // Skeleton card (uses your .card border radius & rhythm)
                 Div({ classes("card") }) {
                     Div({ classes("sk-block") })
                     Div({ classes("sk-gap") })
@@ -218,9 +208,7 @@ fun PostDetailPage(postId: Long) {
                 Div({ classes("card", "stack", "fade-in") }) {
                     // Title row
                     Div({ classes("row") }) {
-                        H2 {
-                            Text(p.title)
-                        }
+                        H2 { Text(p.title) }
                     }
 
                     // Meta row
@@ -230,23 +218,37 @@ fun PostDetailPage(postId: Long) {
                             Text("by $author · ${p.createdAt}")
                         }
                         Div({ classes("spacer") }) {}
-                        // Copy link action
-                        Button(attrs = {
-                            classes("btn")
-                            onClick {
-                                val link = "${window.location.origin}${window.location.pathname}#/post/${p.id}"
-                                scope.launch {
-                                    try {
-                                        window.navigator.clipboard.writeText(link).await()
-                                        copied = true
-                                        delay(1200)
-                                        copied = false
-                                    } catch (_: Throwable) {
-                                        copied = false
+
+                        // Right-side controls stacked vertically:
+                        Div({
+                            attr(
+                                "style",
+                                "display:flex;flex-direction:column;gap:6px;align-items:flex-end;"
+                            )
+                        }) {
+                            // ▲ Upvote button (compact) ABOVE the Copy link button
+                            UpvoteButton(
+                                postId = p.id.toString(),
+                                compact = true
+                            )
+
+                            Button(attrs = {
+                                classes("btn")
+                                onClick {
+                                    val link = "${window.location.origin}${window.location.pathname}#/post/${p.id}"
+                                    scope.launch {
+                                        try {
+                                            window.navigator.clipboard.writeText(link).await()
+                                            copied = true
+                                            delay(1200)
+                                            copied = false
+                                        } catch (_: Throwable) {
+                                            copied = false
+                                        }
                                     }
                                 }
-                            }
-                        }) { Text(if (copied) "Copied ✓" else "Copy link") }
+                            }) { Text(if (copied) "Copied ✓" else "Copy link") }
+                        }
                     }
 
                     // Divider
@@ -254,7 +256,6 @@ fun PostDetailPage(postId: Long) {
 
                     // Content
                     P {
-                        // Respect your base typography; no extra classes needed
                         Text(p.content)
                     }
 
