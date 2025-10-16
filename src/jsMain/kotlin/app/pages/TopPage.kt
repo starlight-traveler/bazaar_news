@@ -8,16 +8,16 @@ import kotlinx.coroutines.*
 import org.jetbrains.compose.web.dom.*
 
 @Composable
-fun TopPage(sort: String = "top") {
+fun TopPage() {
     var posts by remember { mutableStateOf<List<Post>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(sort) {
+    LaunchedEffect(Unit) {
         loading = true
         error = null
         try {
-            posts = getPosts()
+            posts = getPosts("top")
         } catch (t: Throwable) {
             error = t.message ?: "Unknown error"
         } finally {

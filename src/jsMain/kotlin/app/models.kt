@@ -21,7 +21,8 @@ data class Post(
     val y: Double,
     val traction: Double,
     val color: String,
-    val radius: Double
+    val radius: Double,
+    val authorUsername: String
 ) {
     // Converts backend string timestamp -> Kotlinx datetime
     fun createdAtLocal(): LocalDateTime? {

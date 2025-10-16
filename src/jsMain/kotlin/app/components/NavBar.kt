@@ -18,7 +18,7 @@ fun NavBar(
     }) {
         Div({ classes("row") }) {
             // App brand
-            A("#/top", attrs = { classes("brand") }) { Text("Bazaar News") }
+            A("#/map", attrs = { classes("brand") }) { Text("Bazaar News") }
 
             Text(" ")
 

@@ -243,7 +243,7 @@ fun PostRow(post: Post, index: Int? = null) {
             Div({ classes(PostRowTheme.metaLine) }) {
                 Span({ classes("small", "muted") }) {
                     Text("Author ")
-                    B { Text(ReversibleUserId32.decode(post.authorId)) }
+                    B { Text(post.authorUsername) }
                 }
 
                 // dot separator

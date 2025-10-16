@@ -11,19 +11,40 @@ import kotlinx.browser.window
 import org.jetbrains.compose.web.ExperimentalComposeWebSvgApi
 import org.w3c.dom.events.Event
 import kotlin.math.pow
+import app.getCommentsForPost
+import app.getUpvoteCount
 
 
 
 
-fun normalizeTraction(posts: List<Post>): List<Post> {
+suspend fun normalizeTraction(posts: List<Post>): List<Post> {
     if (posts.isEmpty()) return posts
+    val postsTraction = posts.map { post ->
+        val commentCount = try {
+            getCommentsForPost(post.id).size
+        } catch (e: Exception) {
+            console.error("Error fetching comments for post ${post.id}: $e")
+            0
+        }
 
-    val minT = posts.minOf { it.traction }
-    val maxT = posts.maxOf { it.traction }
+        val upvoteCount = try {
+            getUpvoteCount(post.id)
+        } catch (e: Exception) {
+            console.error("Error fetching upvotes for post ${post.id}: $e")
+            0
+        }
+
+        // Calculate traction: combine comments and upvotes
+        val traction = (commentCount + upvoteCount).toDouble()
+        console.log(traction)
+        post.copy(traction = traction)
+    }
+    val minT = postsTraction.minOf { it.traction }
+    val maxT = postsTraction.maxOf { it.traction }
     val range = (maxT - minT).let { if (it == 0.0) 1.0 else it }
 
     // Initial placement based on traction
-    val positioned = posts.mapIndexed { index, p ->
+    val positioned = postsTraction.mapIndexed { index, p ->
         val normalized = (p.traction - minT) / range
         val spread = 400.0 * (1 - normalized).pow(1.5)
 
@@ -248,13 +269,20 @@ fun MapPage() {
                                 justifyContent(JustifyContent.Center)
                                 alignItems(AlignItems.Center)
                                 property("text-align", "center")
+                                overflow("hidden")
                             }
                         }) {
-                            P({ style { margin(0.px, 0.px, 4.px) } }) {
+                            P({ style {
+                                margin(0.px)
+                                property("word-break", "break-word")
+                                property("overflow", "hidden")
+                                property("text-overflow", "ellipsis")
+                                property("display", "-webkit-box")
+                                property("-webkit-line-clamp", "4")
+                                property("-webkit-box-orient", "vertical")
+                                fontSize(12.px)
+                            } }) {
                                 Text(post.title)
-                            }
-                            Small {
-                                Text(post.content.take(50) + if (post.content.length > 50) "..." else "")
                             }
                         }
                     }

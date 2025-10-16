@@ -30,8 +30,8 @@ val httpClient = HttpClient(Js) {
 
 /* -------------------- POSTS -------------------- */
 
-suspend fun getPosts(): List<Post> {
-    return httpClient.get("$BASE_URL/posts").body()
+suspend fun getPosts(sort: String = "new"): List<Post> {
+    return httpClient.get("$BASE_URL/posts?sort=$sort").body()
 }
 
 suspend fun getPost(id: Int): Post {
@@ -96,4 +96,16 @@ suspend fun createComment(postId: Int, username: String, content: String): Strin
             "content" to listOf(content)
         )
     ).bodyAsText()
+}
+
+
+// function to count upvotes
+suspend fun getUpvoteCount(postId: Int): Int {
+    return try {
+        val response: Map<String, Int> = httpClient.get("$BASE_URL/posts/$postId/upvotes").body()
+        response["count"] ?: 0
+    } catch (e: Exception) {
+        console.error("Error fetching upvote count for post $postId: $e")
+        0
+    }
 }

@@ -109,17 +109,17 @@ fun App() {
     }) {
         when (route) {
             Route.Map -> MapPage()
-            Route.Top -> TopPage("top")
+            Route.Top -> TopPage()
             Route.New -> NewPage()
             Route.Item -> ItemPage(itemId ?: -1L)
             Route.Post -> PostDetailPage(itemId ?: -1L)
             Route.Submit -> SubmitPage()
             Route.Login -> LoginPage(
                 onLoggedIn = { name ->
-                    val userId = ReversibleUserId32.encode(name)
+                    //val userId = ReversibleUserId32.encode(name)
                     window.localStorage.setItem("loggedIn", "true")
                     window.localStorage.setItem("username", name)
-                    window.localStorage.setItem("userId", userId.toString())
+                    //window.localStorage.setItem("userId", userId.toString())
 
                     // Lift state immediately
                     loggedIn = true

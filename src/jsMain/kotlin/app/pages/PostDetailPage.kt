@@ -128,6 +128,7 @@ fun PostDetailPage(postId: Long) {
 
     val scope = rememberCoroutineScope()
 
+    // Get post by its id
     LaunchedEffect(postId) {
         loading = true
         error = null
@@ -213,7 +214,7 @@ fun PostDetailPage(postId: Long) {
 
                     // Meta row
                     Div({ classes("row") }) {
-                        val author = ReversibleUserId32.decode(p.authorId)
+                        val author = p.authorUsername
                         Span({ classes("small", "muted") }) {
                             Text("by $author · ${p.createdAt}")
                         }

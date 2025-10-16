@@ -19,12 +19,11 @@ fun NewPage() {
         error = null
         try {
             // Fetch all posts from backend
-            val all = getPosts()
+            posts = getPosts("new")
 
             // Sort newest-first (desc) by createdAt.
             // Backend returns LocalDateTime.toString() (no zone), which JS Date can parse.
             // If parsing fails, push that item to the end (treat as very old).
-            posts = all.sortedByDescending { createdAtMillis(it.createdAt) }
         } catch (t: Throwable) {
             error = t.message ?: "Unknown error"
         } finally {

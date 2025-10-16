@@ -1,5 +1,5 @@
 package app.util
-
+// we did not end up needing to use this
 /**
  * Reversible 32-bit encoding for constrained usernames.
  *
@@ -21,9 +21,9 @@ package app.util
 object ReversibleUserId32 {
     // 32-symbol alphabet (5 bits per char). Adjust ONLY if you regenerate existing IDs.
     private const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"
-    private const val MAX_LEN = 5
-    private const val LENGTH_BITS = 3 // supports values 0..7 (we only use 0..4)
-    private const val CHAR_BITS = 5   // 32 symbols
+    private const val MAX_LEN = 50
+    private const val LENGTH_BITS = 20 // supports values 0..7 (we only use 0..4)
+    private const val CHAR_BITS = 50   // 32 symbols
 
     private val charToCode: IntArray = IntArray(128) { -1 }.apply {
         for (i in ALPHABET.indices) {
