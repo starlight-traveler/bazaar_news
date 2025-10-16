@@ -29,4 +29,4 @@ suspend fun getUpvoteCount(postId: Int): Int {
     }
 }
 ```
-Since sql transactions may return null for the count, Kotlin infers the type Int? forresponse["count"], which represents a nullable integer in Kotlin. The ?: operator guarantees that this null case has a fall back, ensuring that the function will always return a non-null Int so there is never a NullPointerException during database transactions.
+Since sql transactions may return null for the count, Kotlin infers the type Int? for response["count"], which represents a nullable integer in Kotlin. The ?: operator guarantees that this null case has a fall back, ensuring that the function will always return a non-null Int so there is never a NullPointerException during database transactions.
