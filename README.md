@@ -1,0 +1,1 @@
+The goal of our project was to create a basic forum site with some unique features. We accomplished this by implementing a relatively normal forum along with a novel map based interface to explore the posts with. Reflecting the name Bazaar News, we created a forum experience where you "Enter the Bazaar". 
